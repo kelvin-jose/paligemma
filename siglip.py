@@ -88,7 +88,7 @@ class SigLIPBlock(nn.Module):
 class SigLIPEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.blocks = [SigLIPBlock(config) for i in range(config.num_layers)]
+        self.blocks = nn.ModuleList([SigLIPBlock(config) for i in range(config.num_layers)])
 
     def forward(self, batch: torch.FloatTensor) -> torch.FloatTensor:
         out = batch
