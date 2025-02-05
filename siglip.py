@@ -63,3 +63,26 @@ class MultiHeadedAttention(nn.Module):
         output = output.flatten(2)
         output = self.linear(output)
         return output
+
+class SigLIPBlock(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.layer_norm1 = nn.LayerNorm(config.hidden_size)
+        self.mha = MultiHeadedAttention(config)
+        self.layer_norm2 = nn.LayerNorm(config.hidden_size)
+        self.ffn1 = nn.Linear(config.hidden_size, config.intermediate_size)
+        self.ffn2 = nn.Linear(config.intermediate_size, config.hidden_size)
+
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        out = self.layer_norm1(x)
+        out = self.mha(out)
+        out = out + x
+        residual = out
+        out = self.layer_norm2(out)
+        out = self.ffn1(out)
+        out = nn.functional.gelu(out, approximate='tanh')
+        out = self.ffn2(out)
+        out = out + residual
+        return out
+        
+        
