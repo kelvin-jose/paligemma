@@ -85,4 +85,14 @@ class SigLIPBlock(nn.Module):
         out = out + residual
         return out
         
+class SigLIPEncoder(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.blocks = [SigLIPBlock(config) for i in range(config.num_layers)]
+
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        out = x
+        for block in self.blocks:
+            out = block(out)
+        return out
         
