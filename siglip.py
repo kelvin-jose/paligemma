@@ -96,3 +96,16 @@ class SigLIPEncoder(nn.Module):
             out = block(out)
         return out
         
+class SigLIP(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.img_processor = ImageProcessor(config)
+        self.encoder = SigLIPEncoder(config)
+        self.layer_norm = nn.LayerNorm(config.hidden_size)
+
+    def forward(self, batch: torch.FloatTensor) -> torch.FloatTensor:
+        out = self.img_processor(batch)
+        out = self.encoder(out)
+        out = self.layer_norm(out)
+        return out
+    
