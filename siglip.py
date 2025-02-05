@@ -44,12 +44,12 @@ class MultiHeadedAttention(nn.Module):
         self.linear = nn.Linear(self.hidden_size, self.hidden_size)
         self.scale_factor = (self.hidden_size // self.num_heads) ** -0.5
 
-    def forward(self, x: torch.Tensor) -> torch.FloatTensor:
-        batch_size = x.shape[0]
-        timesteps = x.shape[1]
-        queries = self.Q(x)
-        keys = self.K(x)
-        values = self.V(x)
+    def forward(self, batch: torch.Tensor) -> torch.FloatTensor:
+        batch_size = batch.shape[0]
+        timesteps = batch.shape[1]
+        queries = self.Q(batch)
+        keys = self.K(batch)
+        values = self.V(batch)
 
         queries = queries.view(batch_size, self.num_heads, timesteps, self.hidden_size // self.num_heads)
         keys = keys.view(batch_size, self.num_heads, timesteps, self.hidden_size // self.num_heads)
@@ -73,10 +73,10 @@ class SigLIPBlock(nn.Module):
         self.ffn1 = nn.Linear(config.hidden_size, config.intermediate_size)
         self.ffn2 = nn.Linear(config.intermediate_size, config.hidden_size)
 
-    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
-        out = self.layer_norm1(x)
+    def forward(self, batch: torch.FloatTensor) -> torch.FloatTensor:
+        out = self.layer_norm1(batch)
         out = self.mha(out)
-        out = out + x
+        out = out + batch
         residual = out
         out = self.layer_norm2(out)
         out = self.ffn1(out)
@@ -90,8 +90,8 @@ class SigLIPEncoder(nn.Module):
         super().__init__()
         self.blocks = [SigLIPBlock(config) for i in range(config.num_layers)]
 
-    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
-        out = x
+    def forward(self, batch: torch.FloatTensor) -> torch.FloatTensor:
+        out = batch
         for block in self.blocks:
             out = block(out)
         return out
