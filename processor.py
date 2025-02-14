@@ -1,14 +1,15 @@
+import torch
 import numpy as np
-from PIL import Image
 
 class PaliGemmaProcessor:
     image_token = '<image>'
-    mean = np.array([0.5, 0.5, 0.5], dtype=np.float32)
-    std = np.array([0.5, 0.5, 0.5], dtype=np.float32)
+    mean = np.array([0.5, 0.5, 0.5], dtype = np.float32)
+    std = np.array([0.5, 0.5, 0.5], dtype = np.float32)
 
-    def __init__(self, tokenizer, image_size):
+    def __init__(self, tokenizer, image_size, image_seq_len):
         self.tokenizer = tokenizer
         self.image_size = image_size
+        self.image_seq_len = image_seq_len
         self.set_tokens()
     
     def set_tokens(self):
@@ -26,7 +27,23 @@ class PaliGemmaProcessor:
             image = np.array(image) * (1/255.).astype(np.float32)
             image = (image - self.mean) / self.std
             image = image.transpose(2, 0, 1)
-        return images
+
+    def prepare_input_strings(self, texts):
+        strings = []
+        for text in texts:
+            strings.append(f"{self.image_token * self.image_seq_len}{self.tokenizer.bos_token}{text}\n")
+        return strings
 
     def __call__(self, images, texts):
-        images = self.preprocess_image(images)
+        self.preprocess_image(images)
+        images = np.stack(images, axis = 0)
+        image_tensors = torch.tensor(images)
+        input_strings = self.prepare_input_strings(texts)
+        input_tokens = self.tokenizer(input_strings,
+                                      return_tensors = "pt",
+                                      padding = "longest",
+                                      truncation = True)
+        return {
+            "image_tensors": image_tensors,
+            **input_tokens
+        }
