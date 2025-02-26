@@ -4,6 +4,9 @@ import torch.nn as nn
 class GemmaConfig:
     vocab_size = 256
     embed_dim = 32
+    max_sequence_len = 64
+    pad_token_id = 0
+    image_token_id = 256000
 
     num_heads = 8
     num_kv = 2
