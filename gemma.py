@@ -92,4 +92,15 @@ class GemmaDecoder(nn.Module):
             out = layer(out)
         return out
         
-             
+class Gemma(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.embeddings = nn.Embedding(config.vocab_size, config.embed_dim)
+        self.decoder = GemmaDecoder(config)
+        self.linear = nn.Linear(config.embed_dim, config.vocab_size)
+
+    def forward(self, batch: torch.FloatTensor) -> torch.FloatTensor:
+        out = self.decoder(batch)
+        logits = self.out(out)
+        probs = nn.functional.softmax(logits, -1)
+        return probs
