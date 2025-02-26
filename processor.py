@@ -13,6 +13,7 @@ class PaliGemmaProcessor:
         self.set_tokens()
     
     def set_tokens(self):
+        print(f"[x] current vocab size: {self.tokenizer.vocab_size}")
         special_token = {"additional_special_tokens": [self.image_token]}
         extra_tokens = [f"loc{i:04d}" for i in range(1024)]
         extra_tokens += [f"seg{i:03d}" for i in range(128)]
@@ -20,13 +21,17 @@ class PaliGemmaProcessor:
         self.tokenizer.add_tokens(extra_tokens)
         self.tokenizer.add_bos_token = False
         self.tokenizer.add_eos_token = False
+        print(f"[x] current vocab size: {len(self.tokenizer)}")
 
     def preprocess_image(self, images):
+        updated_images = []
         for image in images:
             image = image.resize((self.image_size, self.image_size))
-            image = np.array(image) * (1/255.).astype(np.float32)
+            image = (np.array(image) * (1/255.)).astype(np.float32)
             image = (image - self.mean) / self.std
             image = image.transpose(2, 0, 1)
+            updated_images.append(image)
+        return updated_images
 
     def prepare_input_strings(self, texts):
         strings = []
@@ -35,7 +40,7 @@ class PaliGemmaProcessor:
         return strings
 
     def __call__(self, images, texts):
-        self.preprocess_image(images)
+        images = self.preprocess_image(images)
         images = np.stack(images, axis = 0)
         image_tensors = torch.tensor(images)
         input_strings = self.prepare_input_strings(texts)
@@ -47,3 +52,26 @@ class PaliGemmaProcessor:
             "image_tensors": image_tensors,
             **input_tokens
         }
+    
+
+# from PIL import Image
+# from lorem_text import lorem
+# from transformers import AutoTokenizer
+# tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b")
+
+# processor = PaliGemmaProcessor(tokenizer, 224, 256)
+# width, height = 256, 256
+# images = []
+# texts = []
+
+# for i in range(5):
+#     random_image = np.random.randint(0, 256, (height, width, 3), dtype=np.uint8)
+#     image = Image.fromarray(random_image)
+#     text = lorem.sentence()
+#     images.append(image)
+#     texts.append(text)
+
+# # out = processor(images, texts)
+# tokens = tokenizer("hello world",
+#                                       return_tensors = "pt", padding="max_length", max_length=256)
+# print(tokens)
