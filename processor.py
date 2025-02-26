@@ -8,6 +8,7 @@ class PaliGemmaProcessor:
 
     def __init__(self, tokenizer, image_size, image_seq_len, max_seq_len):
         self.tokenizer = tokenizer
+        self.tokenizer.padding_side = "right"
         self.image_size = image_size
         self.image_seq_len = image_seq_len
         self.max_seq_len = max_seq_len
@@ -34,17 +35,17 @@ class PaliGemmaProcessor:
             updated_images.append(image)
         return updated_images
 
-    def prepare_input_strings(self, texts):
+    def prepare_input_strings(self, prefix, suffix):
         strings = []
-        for text in texts:
-            strings.append(f"{self.image_token * self.image_seq_len}{self.tokenizer.bos_token}{text}\n")
+        for p, s in zip(prefix, suffix):
+            strings.append(f"{self.image_token * self.image_seq_len}{self.tokenizer.bos_token}{p}\n{s}{self.tokenizer.eos_token}")
         return strings
 
-    def __call__(self, images, texts):
+    def __call__(self, images, prefix, suffix):
         images = self.preprocess_image(images)
         images = np.stack(images, axis = 0)
         image_tensors = torch.tensor(images)
-        input_strings = self.prepare_input_strings(texts)
+        input_strings = self.prepare_input_strings(suffix, prefix)
         input_tokens = self.tokenizer(input_strings,
                                       return_tensors = "pt",
                                       padding = "longest",
