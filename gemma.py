@@ -60,4 +60,24 @@ class MultiHeadedAttention(nn.Module):
         output = self.linear(output)
         return output
         
-        
+class GemmaBlock(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.rms_norm1 = RMSNorm(config)
+        self.mha = MultiHeadedAttention(config)
+        self.rms_norm2 = RMSNorm(config)
+        self.ffn1 = nn.Linear(config.embed_dim, config.intermediate_dim)
+        self.ffn2 = nn.Linear(config.intermediate_dim, config.embed_dim)
+
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        out = self.rms_norm1(x)
+        out = self.mha(out)
+        out = out + x
+        residual = out
+        out = self.rms_norm2(out)
+        out = self.ffn1(out)
+        out = nn.functional.gelu(out, approximate='tanh')
+        out = self.ffn2(out)
+        out = out + residual
+        return out
+             
