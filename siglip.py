@@ -28,7 +28,7 @@ class ImageProcessor(nn.Module):
 
     def forward(self, batch: torch.Tensor) -> torch.Tensor:
         features = self.conv_layer(batch)
-        features = features.view(batch.shape[0], -1, self.conv_layer.out_channels)
+        features = features.reshape(batch.shape[0], -1, self.conv_layer.out_channels)
         output = features + self.position_encoding(self.position_ids)
         return output
         
