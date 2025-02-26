@@ -80,4 +80,16 @@ class GemmaBlock(nn.Module):
         out = self.ffn2(out)
         out = out + residual
         return out
+    
+class GemmaDecoder(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.layers = nn.ModuleList([GemmaBlock(config) for i in range(config.num_layers)])
+
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        out = x
+        for layer in self.layers:
+            out = layer(out)
+        return out
+        
              
