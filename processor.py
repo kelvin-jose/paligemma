@@ -6,10 +6,11 @@ class PaliGemmaProcessor:
     mean = np.array([0.5, 0.5, 0.5], dtype = np.float32)
     std = np.array([0.5, 0.5, 0.5], dtype = np.float32)
 
-    def __init__(self, tokenizer, image_size, image_seq_len):
+    def __init__(self, tokenizer, image_size, image_seq_len, max_seq_len):
         self.tokenizer = tokenizer
         self.image_size = image_size
         self.image_seq_len = image_seq_len
+        self.max_seq_len = max_seq_len
         self.set_tokens()
     
     def set_tokens(self):
@@ -47,31 +48,9 @@ class PaliGemmaProcessor:
         input_tokens = self.tokenizer(input_strings,
                                       return_tensors = "pt",
                                       padding = "longest",
+                                      max_length = self.max_seq_len,
                                       truncation = True)
         return {
             "image_tensors": image_tensors,
             **input_tokens
         }
-    
-
-# from PIL import Image
-# from lorem_text import lorem
-# from transformers import AutoTokenizer
-# tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b")
-
-# processor = PaliGemmaProcessor(tokenizer, 224, 256)
-# width, height = 256, 256
-# images = []
-# texts = []
-
-# for i in range(5):
-#     random_image = np.random.randint(0, 256, (height, width, 3), dtype=np.uint8)
-#     image = Image.fromarray(random_image)
-#     text = lorem.sentence()
-#     images.append(image)
-#     texts.append(text)
-
-# # out = processor(images, texts)
-# tokens = tokenizer("hello world",
-#                                       return_tensors = "pt", padding="max_length", max_length=256)
-# print(tokens)
