@@ -13,3 +13,13 @@ class GemmaConfig:
 
     eps = 0.001
 
+class RMSNorm(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.eps = config.eps
+        self.param = nn.Parameter(torch.zeros(config.embed_dim))
+
+    def forward(self, x):
+        x = x * torch.rsqrt(x.pow(2).mean(-1, keepdim = True) + self.eps)
+        x = x * (1.0 + self.param)
+        return x
