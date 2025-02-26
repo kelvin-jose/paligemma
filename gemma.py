@@ -7,6 +7,7 @@ class GemmaConfig:
     max_sequence_len = 64
     pad_token_id = 0
     image_token_id = 256000
+    vocab_size = 257153
 
     num_heads = 8
     num_kv = 2
@@ -101,6 +102,9 @@ class Gemma(nn.Module):
         self.embeddings = nn.Embedding(config.vocab_size, config.embed_dim)
         self.decoder = GemmaDecoder(config)
         self.linear = nn.Linear(config.embed_dim, config.vocab_size)
+
+    def get_embeddings(self, indices):
+        return self.embeddings(indices)
 
     def forward(self, batch: torch.FloatTensor) -> torch.FloatTensor:
         out = self.decoder(batch)
