@@ -3,19 +3,20 @@ import torch.nn as nn
 
 class GemmaConfig:
     vocab_size = 256
-    embed_dim = 32
-    max_sequence_len = 64
+    embed_dim = 768
+    max_sequence_len = 228
     pad_token_id = 0
+    sep_token_id = 108
     image_token_id = 256000
     vocab_size = 257153
 
     num_heads = 8
     num_kv = 2
-    head_dim = 4
-    num_layers = 12
-    intermediate_dim = 8
+    head_dim = 96
+    num_layers = 1
+    intermediate_dim = 2048
 
-    eps = 0.001
+    eps = 0.00001
 
 class RMSNorm(nn.Module):
     def __init__(self, config):
@@ -40,7 +41,7 @@ class MultiHeadedAttention(nn.Module):
         self.V = nn.Linear(config.embed_dim, self.num_kv * self.head_dim)
         self.linear = nn.Linear(config.embed_dim, config.embed_dim)
 
-    def forward(self, x, attention_mask=0):
+    def forward(self, x, attention_mask):
         batch_size = x.shape[0]
         time_steps = x.shape[1]
 
@@ -55,7 +56,8 @@ class MultiHeadedAttention(nn.Module):
         keys = keys.repeat(1, self.num_heads // self.num_kv, 1, 1)
         values = values.repeat(1, self.num_heads // self.num_kv, 1, 1)
         scores = queries @ keys.transpose(2, 3) / self.head_dim ** -0.5
-        scores = scores + attention_mask
+        mask = attention_mask.unsqueeze(1) == 0
+        scores = scores.masked_fill(mask, 1e-9)
         scores = nn.functional.softmax(scores, -1)
         scores = nn.functional.dropout(scores, training = self.training)
         output = scores @ values 
@@ -73,9 +75,9 @@ class GemmaBlock(nn.Module):
         self.ffn1 = nn.Linear(config.embed_dim, config.intermediate_dim)
         self.ffn2 = nn.Linear(config.intermediate_dim, config.embed_dim)
 
-    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+    def forward(self, x: torch.FloatTensor, attention_mask: torch.IntTensor) -> torch.FloatTensor:
         out = self.rms_norm1(x)
-        out = self.mha(out)
+        out = self.mha(out, attention_mask)
         out = out + x
         residual = out
         out = self.rms_norm2(out)
@@ -90,10 +92,10 @@ class GemmaDecoder(nn.Module):
         super().__init__()
         self.layers = nn.ModuleList([GemmaBlock(config) for i in range(config.num_layers)])
 
-    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+    def forward(self, x: torch.FloatTensor, attention_mask: torch.IntTensor) -> torch.FloatTensor:
         out = x
         for layer in self.layers:
-            out = layer(out)
+            out = layer(out, attention_mask)
         return out
         
 class Gemma(nn.Module):
@@ -106,8 +108,8 @@ class Gemma(nn.Module):
     def get_embeddings(self, indices):
         return self.embeddings(indices)
 
-    def forward(self, batch: torch.FloatTensor) -> torch.FloatTensor:
-        out = self.decoder(batch)
-        logits = self.out(out)
+    def forward(self, batch: torch.FloatTensor, attention_mask: torch.IntTensor) -> torch.FloatTensor:
+        out = self.decoder(batch, attention_mask)
+        logits = self.linear(out)
         probs = nn.functional.softmax(logits, -1)
         return probs
