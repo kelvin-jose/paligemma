@@ -48,8 +48,9 @@ class PaliGemmaProcessor:
         input_strings = self.prepare_input_strings(suffix, prefix)
         input_tokens = self.tokenizer(input_strings,
                                       return_tensors = "pt",
-                                      padding = "max_length",
-                                      max_length = self.max_seq_len)
+                                      padding = "longest",
+                                      max_length = self.max_seq_len,
+                                      truncation = True)
         return {
             "image_tensors": image_tensors,
             **input_tokens
