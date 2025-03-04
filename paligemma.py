@@ -13,3 +13,7 @@ class PaliGemma(nn.Module):
         super().__init__()
         self.vision_tower = siglip.SigLIP(siglip.SigLIPConfig)
         self.langauge_tower = gemma.Gemma(gemma.GemmaConfig)
+        self.input_processor = PaliGemmaProcessor(tokenizer, vision_config.image_size, (siglip.SigLIPConfig.image_size // siglip.SigLIPConfig.patch_size)**2, language_config.max_sequence_len)
+
+    def forward(self, images, prefix, suffix):
+        output = self.input_processor(images, prefix, suffix)
