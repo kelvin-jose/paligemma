@@ -28,6 +28,25 @@ class RMSNorm(nn.Module):
         x = x * torch.rsqrt(x.pow(2).mean(-1, keepdim = True) + self.eps)
         x = x * (1.0 + self.param)
         return x
+
+class RoPE(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        theta = config.theta ** (-torch.arange(0, config.head_dim, 2, dtype=torch.float32) / config.head_dim)
+        self.register_buffer("theta", theta, persistent=False)
+
+    def forward(self, x, position_ids):
+        b, n, _ = x.shape
+        pos_emb = position_ids.float().unsqueeze(-1) * self.theta.unsqueeze(0)
+
+        cos, sin = pos_emb.cos(), pos_emb.sin()
+
+        x1, x2 = x[..., ::2], x[..., 1::2]
+        rot_x1 = x1 * cos - x2 * sin
+        rot_x2 = x1 * sin + x2 * cos
+        rot = torch.stack([rot_x1, rot_x2], dim=-1).reshape(b, n, -1)
+        return rot
+
     
 class MultiHeadedAttention(nn.Module):
     def __init__(self, config):
