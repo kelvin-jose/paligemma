@@ -18,6 +18,8 @@ class GemmaConfig:
 
     eps = 0.00001
 
+    theta = 10000
+
 class RMSNorm(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -35,16 +37,20 @@ class RoPE(nn.Module):
         theta = config.theta ** (-torch.arange(0, config.head_dim, 2, dtype=torch.float32) / config.head_dim)
         self.register_buffer("theta", theta, persistent=False)
 
+    @torch.no_grad()
     def forward(self, x, position_ids):
-        b, n, _ = x.shape
-        pos_emb = position_ids.float().unsqueeze(-1) * self.theta.unsqueeze(0)
-
+        batch_size, num_heads, time_steps, head_dim = x.shape
+        pos_emb = position_ids.float().unsqueeze(-1) * self.theta.view(1, 1, -1)
+    
         cos, sin = pos_emb.cos(), pos_emb.sin()
+
+        cos = cos.unsqueeze(1).expand(-1, num_heads, -1, -1)
+        sin = sin.unsqueeze(1).expand(-1, num_heads, -1, -1)
 
         x1, x2 = x[..., ::2], x[..., 1::2]
         rot_x1 = x1 * cos - x2 * sin
         rot_x2 = x1 * sin + x2 * cos
-        rot = torch.stack([rot_x1, rot_x2], dim=-1).reshape(b, n, -1)
+        rot = torch.stack([rot_x1, rot_x2], dim=-1).reshape(batch_size, num_heads, time_steps, head_dim)
         return rot
 
     
@@ -59,6 +65,7 @@ class MultiHeadedAttention(nn.Module):
         self.K = nn.Linear(config.embed_dim, self.num_kv * self.head_dim)
         self.V = nn.Linear(config.embed_dim, self.num_kv * self.head_dim)
         self.linear = nn.Linear(config.embed_dim, config.embed_dim)
+        self.rope = RoPE(config)
 
     def forward(self, x, attention_mask):
         batch_size = x.shape[0]
@@ -71,7 +78,9 @@ class MultiHeadedAttention(nn.Module):
         queries = queries.view(batch_size, self.num_heads, time_steps, self.head_dim)
         keys = keys.view(batch_size, self.num_kv, time_steps, self.head_dim)
         values = values.view(batch_size, self.num_kv, time_steps, self.head_dim)
-        # todo: apply rotary positional encoding
+        position_ids = torch.arange(time_steps).expand(batch_size, -1)
+        keys = self.rope(keys, position_ids)
+        values = self.rope(values, position_ids)
         keys = keys.repeat(1, self.num_heads // self.num_kv, 1, 1)
         values = values.repeat(1, self.num_heads // self.num_kv, 1, 1)
         scores = queries @ keys.transpose(2, 3) / self.head_dim ** -0.5
