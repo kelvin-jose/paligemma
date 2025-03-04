@@ -20,3 +20,4 @@ class PaliGemma(nn.Module):
         img_tensor = output['image_tensors']
         input_ids = output['input_ids']
         image_features = self.vision_tower(img_tensor)
+        embeds = self.langauge_tower.get_embeddings(input_ids)
