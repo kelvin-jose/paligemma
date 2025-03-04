@@ -17,3 +17,6 @@ class PaliGemma(nn.Module):
 
     def forward(self, images, prefix, suffix):
         output = self.input_processor(images, prefix, suffix)
+        img_tensor = output['image_tensors']
+        input_ids = output['input_ids']
+        image_features = self.vision_tower(img_tensor)
