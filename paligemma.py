@@ -21,3 +21,5 @@ class PaliGemma(nn.Module):
         input_ids = output['input_ids']
         image_features = self.vision_tower(img_tensor)
         embeds = self.langauge_tower.get_embeddings(input_ids)
+        img_last_idx = image_features.shape[1]
+        embeds[:, :img_last_idx, :] = image_features
