@@ -12,3 +12,4 @@ class PaliGemma(nn.Module):
     def __init__(self, vision_config, language_config):
         super().__init__()
         self.vision_tower = siglip.SigLIP(siglip.SigLIPConfig)
+        self.langauge_tower = gemma.Gemma(gemma.GemmaConfig)
