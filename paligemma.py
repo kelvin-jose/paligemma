@@ -46,3 +46,6 @@ class PaliGemma(nn.Module):
         embeds = self.langauge_tower.get_embeddings(input_ids)
         img_last_idx = image_features.shape[1]
         embeds[:, :img_last_idx, :] = image_features
+        attention_mask = self.generate_attention_mask(input_ids)
+        output = self.langauge_tower(embeds, attention_mask)
+
