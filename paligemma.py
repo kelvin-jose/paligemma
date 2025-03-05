@@ -9,11 +9,14 @@ from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b")
 
 class PaliGemma(nn.Module):
-    def __init__(self, vision_config, language_config):
+    def __init__(self):
         super().__init__()
         self.vision_tower = siglip.SigLIP(siglip.SigLIPConfig)
         self.langauge_tower = gemma.Gemma(gemma.GemmaConfig)
-        self.input_processor = PaliGemmaProcessor(tokenizer, vision_config.image_size, (siglip.SigLIPConfig.image_size // siglip.SigLIPConfig.patch_size)**2, language_config.max_sequence_len)
+        self.input_processor = PaliGemmaProcessor(tokenizer, 
+                                                  siglip.SigLIPConfig.image_size, 
+                                                  (siglip.SigLIPConfig.image_size // siglip.SigLIPConfig.patch_size)**2, 
+                                                  gemma.GemmaConfig.max_sequence_len)
 
     def generate_attention_mask(self, batch):
         b, n = batch.shape 
