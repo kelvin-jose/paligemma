@@ -7,6 +7,7 @@ class GemmaConfig:
     max_sequence_len = 228
     pad_token_id = 0
     sep_token_id = 108
+    eos_token_id = 1
     image_token_id = 256000
     vocab_size = 257153
 
@@ -19,6 +20,8 @@ class GemmaConfig:
     eps = 0.00001
 
     theta = 10000
+
+    ignore_index = -100
 
 class RMSNorm(nn.Module):
     def __init__(self, config):
