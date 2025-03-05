@@ -38,6 +38,27 @@ class PaliGemma(nn.Module):
         
         return attention_masks
     
+    def generate_labels(input_ids):
+        b, n = input_ids.shape
+        labels = torch.full_like(input_ids, gemma.GemmaConfig.ignore_index)
+
+        for i in range(b):
+            row = input_ids[i]
+            suffix_idx = (row == gemma.GemmaConfig.sep_token_id).nonzero(as_tuple=True)[0]
+            if not len(suffix_idx):
+                continue
+            for j in range(len(suffix_idx)):
+                start_idx = suffix_idx[j] + 1
+                end_idx = (row[start_idx:] == gemma.GemmaConfig.eos_token_id).nonzero(as_tuple=True)[0]
+                if not len(end_idx):
+                    continue
+                end_idx = start_idx + end_idx[0]
+
+                if start_idx < end_idx:
+                    labels[i, start_idx: end_idx - 1] = row[start_idx + 1: end_idx]
+                    labels[i, end_idx - 1] = gemma.GemmaConfig.eos_token_id
+        return labels
+    
     def forward(self, images, prefix, suffix):
         output = self.input_processor(images, prefix, suffix)
         img_tensor = output['image_tensors']
