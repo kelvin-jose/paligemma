@@ -45,7 +45,7 @@ class PaliGemmaProcessor:
         images = self.preprocess_image(images)
         images = np.stack(images, axis = 0)
         image_tensors = torch.tensor(images)
-        input_strings = self.prepare_input_strings(suffix, prefix)
+        input_strings = self.prepare_input_strings(prefix, suffix)
         input_tokens = self.tokenizer(input_strings,
                                       return_tensors = "pt",
                                       padding = "longest",
