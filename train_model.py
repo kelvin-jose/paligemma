@@ -68,3 +68,33 @@ class Trainer:
             torch.nn.init.xavier_uniform_(m.weight)
             if m.bias is not None:
                 torch.nn.init.zeros_(m.bias)    
+
+    def train(self):
+        self.model.to(self.config.device)
+        self.model.apply(self.init_weights_xavier)
+        num_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        print(f"[x] trainable parameters: {num_params:,}")
+        optimizer = optim.AdamW(self.model.parameters(), self.config.learning_rate, weight_decay=self.config.weight_decay)
+
+        self.model.train()
+
+        if self.config.log_tensorboard:
+            writer = SummaryWriter("runs/paligemma/train")
+            
+        for epoch in range(self.config.epochs):
+            for idx, batch in enumerate(self.dataset.get_batch(self.config.batch_size)):
+                optimizer.zero_grad()
+                output = self.input_processor(batch['images'], batch['prefix'], batch['suffix'])
+                output, labels = self.model(output['image_tensors'], output['input_ids'])
+                output = output.permute(0, 2, 1)
+                loss = F.cross_entropy(output, labels)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
+                if (epoch + 1) * (idx + 1) % self.config.log_interval == 0:
+                    if self.config.log_tensorboard:
+                        writer.add_scalar("Loss/Train", loss.item(), (epoch + 1) * (idx + 1))
+                    else:
+                        print(f'[x] epoch: {epoch} | step: {idx} | loss: {loss.item()}')
+                optimizer.step()
+        if self.config.log_tensorboard:
+            writer.close()
