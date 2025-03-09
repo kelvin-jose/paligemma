@@ -11,3 +11,7 @@ from processor import PaliGemmaProcessor
 
 from transformers import AutoTokenizer
 from datasets import load_dataset
+
+dataset = load_dataset("MathLLMs/MathVision")
+test = dataset['test']
+train = dataset['testmini']
