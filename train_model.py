@@ -98,3 +98,9 @@ class Trainer:
                 optimizer.step()
         if self.config.log_tensorboard:
             writer.close()
+
+pg = PaliGemma()
+tconfig = TrainConfig()
+dataset = Dataset(images[:4], prefix[:4], suffix[:4])
+trainer = Trainer(pg, dataset, tconfig)
+trainer.train()
