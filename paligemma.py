@@ -1,23 +1,15 @@
 import gemma
 import siglip
-from processor import PaliGemmaProcessor
 
 import torch
 import torch.nn as nn
-from transformers import AutoTokenizer
-
-tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b")
 
 class PaliGemma(nn.Module):
     def __init__(self):
         super().__init__()
         self.vision_tower = siglip.SigLIP(siglip.SigLIPConfig)
         self.langauge_tower = gemma.Gemma(gemma.GemmaConfig)
-        self.input_processor = PaliGemmaProcessor(tokenizer, 
-                                                  siglip.SigLIPConfig.image_size, 
-                                                  (siglip.SigLIPConfig.image_size // siglip.SigLIPConfig.patch_size)**2, 
-                                                  gemma.GemmaConfig.max_sequence_len)
-
+    
     def generate_attention_mask(self, batch):
         b, n = batch.shape 
         attention_masks = torch.zeros((b, n, n), dtype=torch.int32)
@@ -41,7 +33,7 @@ class PaliGemma(nn.Module):
         
         return attention_masks
     
-    def generate_labels(input_ids):
+    def generate_labels(self, input_ids):
         b, n = input_ids.shape
         labels = torch.full_like(input_ids, gemma.GemmaConfig.ignore_index)
 
@@ -62,15 +54,14 @@ class PaliGemma(nn.Module):
                     labels[i, end_idx - 1] = gemma.GemmaConfig.eos_token_id
         return labels
     
-    def forward(self, images, prefix, suffix):
-        output = self.input_processor(images, prefix, suffix)
-        img_tensor = output['image_tensors']
-        input_ids = output['input_ids']
-        image_features = self.vision_tower(img_tensor)
+    def forward(self, image_tensors, input_ids):
+        image_features = self.vision_tower(image_tensors)
         embeds = self.langauge_tower.get_embeddings(input_ids)
         img_last_idx = image_features.shape[1]
         embeds[:, :img_last_idx, :] = image_features
         attention_mask = self.generate_attention_mask(input_ids)
         output = self.langauge_tower(embeds, attention_mask)
-        return output
+        labels = self.generate_labels(input_ids)
+        return output, labels
 
+    
