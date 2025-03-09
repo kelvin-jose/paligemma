@@ -26,3 +26,13 @@ for row in test:
     prefix.append(p)
     suffix.append(s)
     images.append(i)
+
+class TrainConfig:
+    batch_size = 1
+    device = 'cpu'
+    epochs = 200
+    learning_rate = 1e-2
+    weight_decay = 1e-5
+
+    log_interval = 10
+    log_tensorboard = True
