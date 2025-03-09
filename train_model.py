@@ -15,3 +15,14 @@ from datasets import load_dataset
 dataset = load_dataset("MathLLMs/MathVision")
 test = dataset['test']
 train = dataset['testmini']
+
+images = []
+prefix = []
+suffix = []
+for row in test:
+    p = re.sub(r"<image\d+>", "", row['question']).replace("\n", "")
+    s = row['answer']
+    i = row['decoded_image']
+    prefix.append(p)
+    suffix.append(s)
+    images.append(i)
