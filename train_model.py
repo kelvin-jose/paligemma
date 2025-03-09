@@ -36,3 +36,18 @@ class TrainConfig:
 
     log_interval = 10
     log_tensorboard = True
+
+class Dataset:
+    def __init__(self, images, prefix, suffix):
+        assert len(images) == len(prefix) == len(suffix)
+        self.images = images
+        self.prefix = prefix
+        self.suffix = suffix
+
+    def get_batch(self, batch_size):
+        for i in range(0, len(self.images), batch_size):
+            yield {
+                "images": self.images[i:i + batch_size],
+                "prefix": self.prefix[i:i + batch_size],
+                "suffix": self.suffix[i:i + batch_size]
+            }
