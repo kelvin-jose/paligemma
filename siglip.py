@@ -9,7 +9,7 @@ class SigLIPConfig:
     hidden_size = 768
     intermediate_size = 3072
     num_layers = 12
-    num_heads = 12
+    num_heads = 8
 
 
 class ImageProcessor(nn.Module):

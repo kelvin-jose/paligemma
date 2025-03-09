@@ -4,7 +4,7 @@ import torch.nn as nn
 class GemmaConfig:
     vocab_size = 256
     embed_dim = 768
-    max_sequence_len = 228
+    max_sequence_len = 2048
     pad_token_id = 0
     sep_token_id = 108
     eos_token_id = 1
@@ -14,7 +14,7 @@ class GemmaConfig:
     num_heads = 8
     num_kv = 2
     head_dim = 96
-    num_layers = 1
+    num_layers = 12
     intermediate_dim = 2048
 
     eps = 0.00001
