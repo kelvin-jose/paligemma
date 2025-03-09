@@ -63,3 +63,8 @@ class Trainer:
                                                   SigLIPConfig.image_size, 
                                                   (SigLIPConfig.image_size // SigLIPConfig.patch_size)**2, 
                                                   GemmaConfig.max_sequence_len)
+    def init_weights_xavier(self, m):
+        if isinstance(m, torch.nn.Linear) or isinstance(m, torch.nn.Conv2d):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                torch.nn.init.zeros_(m.bias)    
