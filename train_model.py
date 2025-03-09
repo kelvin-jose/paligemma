@@ -51,3 +51,5 @@ class Dataset:
                 "prefix": self.prefix[i:i + batch_size],
                 "suffix": self.suffix[i:i + batch_size]
             }
+
+tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b")
