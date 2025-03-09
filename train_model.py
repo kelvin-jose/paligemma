@@ -53,3 +53,9 @@ class Dataset:
             }
 
 tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b")
+
+class Trainer:
+    def __init__(self, model, dataset, config):
+        self.model = model
+        self.dataset = dataset
+        self.config = config
