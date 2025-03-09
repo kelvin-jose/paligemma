@@ -59,3 +59,7 @@ class Trainer:
         self.model = model
         self.dataset = dataset
         self.config = config
+        self.input_processor = PaliGemmaProcessor(tokenizer, 
+                                                  SigLIPConfig.image_size, 
+                                                  (SigLIPConfig.image_size // SigLIPConfig.patch_size)**2, 
+                                                  GemmaConfig.max_sequence_len)
