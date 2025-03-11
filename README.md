@@ -20,10 +20,10 @@
 ## Project Structure
 
 ```sh
-        PaliGemma/
-            │── gemma.py          # Language model integration
-            │── paligemma.py      # Main model script
-            │── processor.py      # Preprocessing module
-            │── siglip.py         # Vision encoder module
-            │── train_model.py    # Training script
-            │── requirements.txt  # Dependencies
+PaliGemma/
+    │── gemma.py          # Language model integration
+    │── paligemma.py      # Main model script
+    │── processor.py      # Preprocessing module
+    │── siglip.py         # Vision encoder module
+    │── train_model.py    # Training script
+    │── requirements.txt  # Dependencies
